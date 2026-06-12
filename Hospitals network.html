@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SHH – Hospitals Network</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f9;--sb:#1a1f2e;--card:#fff;--border:#e5e9f0;
+  --tp:#1a1f2e;--ts:#6b7280;--tm:#9ca3af;
+  --blue:#2563eb;--red:#ef4444;--green:#10b981;--orange:#f97316;
+  --r:10px;--sh:0 1px 4px rgba(0,0,0,0.07);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#06090f;color:var(--tp);display:flex;height:100vh;overflow:hidden;font-size:13px}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    background:#1a1f2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #2a3045;
+  }
+  .brand-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .brand-sub { color: #5a6378; font-size: 10px; margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: #7b839a;
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-item:hover { background: #232940; color: #c8cdd9; }
+  .nav-item.active {
+    color: #fff;
+    background: #232940;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px; bottom: 5px;
+    width: 3px;
+    background:#2563eb;
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+.sb-footer{padding:11px 14px;border-top:1px solid #252c3d}
+.node-dot{width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0;display:inline-block;margin-right:6px}
+.node-name{font-size:11px;font-weight:600;color:#fff}
+.node-status{font-size:9.5px;color:#10b981;margin-top:3px;padding-left:13px}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* TOPBAR */
+.tb{background:rgba(15,23,42,0.97);border-bottom:1px solid rgba(255,255,255,0.08);height:46px;padding:0 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10}
+.search-wrap{flex:1;max-width:360px;position:relative}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:6px 12px 6px 30px;font-size:12px;color:#fff;outline:none}
+.search-wrap input::placeholder{color:rgba(255,255,255,0.35)}
+.search-wrap .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.35);font-size:13px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.notif{position:relative;font-size:16px;color:rgba(255,255,255,0.6);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.nb{position:absolute;top:2px;right:2px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1px solid #0b1120}
+.tb-user-block{text-align:right}
+.tb-user-name{font-size:11px;font-weight:800;color:#fff;letter-spacing:.5px}
+.tb-user-role{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.4px}
+
+/* BODY ROW */
+.body-row{flex:1;display:flex;overflow:hidden}
+
+/* MAP AREA */
+.map-area{flex:1;position:relative;overflow:hidden;background:#060d1a}
+canvas#mapCanvas{position:absolute;inset:0;width:100%;height:100%}
+
+/* OVERVIEW CARD */
+.overview-card{position:absolute;top:18px;left:18px;background:rgba(255,255,255,0.96);backdrop-filter:blur(10px);border-radius:12px;padding:13px 17px;box-shadow:0 4px 20px rgba(0,0,0,0.35);min-width:200px;z-index:5}
+.ov-title{font-size:16px;font-weight:900;color:#1a1f2e;margin-bottom:2px}
+.ov-sub{font-size:10.5px;color:#6b7280;margin-bottom:9px}
+.ov-legend{display:flex;gap:11px}
+.ov-leg{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:#4b5563}
+.ov-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* MAP CONTROLS */
+.map-controls{position:absolute;bottom:72px;left:18px;display:flex;flex-direction:column;gap:5px;z-index:5}
+.map-btn{width:30px;height:30px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;cursor:pointer;font-weight:600;backdrop-filter:blur(4px)}
+.map-btn:hover{background:rgba(255,255,255,0.2)}
+.map-loc{margin-top:4px;width:30px;height:30px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;cursor:pointer}
+
+/* RIGHT PANEL */
+.right-panel{width:285px;background:#fff;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.rp-header{display:flex;align-items:center;justify-content:space-between;padding:13px 15px 10px;border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;background:#fff;z-index:2}
+.rp-title{font-size:13.5px;font-weight:800;color:var(--tp)}
+.rp-filter{color:var(--ts);font-size:16px;cursor:pointer}
+
+/* FACILITY CARDS */
+.fac-card{border-bottom:1px solid #f1f3f7;padding:13px 15px}
+.fac-card:last-child{border-bottom:none}
+.fac-badge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:7px}
+.badge-alert{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+.badge-high{background:#f0fdf4;color:#059669;border:1px solid #bbf7d0}
+.badge-moderate{background:#fffbeb;color:#d97706;border:1px solid #fcd34d}
+.fac-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px}
+.fac-name{font-size:13.5px;font-weight:800;color:var(--tp);line-height:1.25;margin-bottom:2px}
+.fac-type{font-size:10px;color:var(--tm);line-height:1.4}
+.fac-dist-val{font-size:17px;font-weight:800;color:var(--blue);line-height:1;text-align:right}
+.fac-dist-unit{font-size:10px;font-weight:700;color:var(--blue)}
+.fac-eta{font-size:9.5px;color:var(--tm);text-align:right;margin-top:2px}
+.fac-eta strong{color:var(--ts);font-weight:600}
+.fac-stats{display:flex;gap:8px;margin-bottom:10px}
+.fac-stat{background:var(--bg);border-radius:7px;padding:7px 11px;flex:1;border:1px solid var(--border)}
+.fac-stat-lbl{font-size:8px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.fac-stat-val{font-size:15px;font-weight:800;line-height:1}
+.fac-stat-sub{font-size:9px;color:var(--tm);margin-top:1px}
+.v-blue{color:var(--blue)}.v-red{color:var(--red)}.v-green{color:var(--green)}.v-orange{color:var(--orange)}
+.fac-btn-row{display:flex;gap:7px;align-items:center}
+.btn-view{flex:1;padding:8px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;text-align:center}
+.btn-view:hover{background:#1d4ed8}
+.btn-suggest{flex:1;padding:8px;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;text-align:center}
+.btn-more{width:27px;height:27px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ts);cursor:pointer;font-size:13px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">SHH</div>
+    <div class="brand-sub">Regional Network Alpha</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <span class="nav-icon">⊞</span><a href="Dashboard.html" style="text-decoration: none; color: inherit;">Dashboard</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🚑</span><a href="Requests managment.html.html" style="text-decoration: none; color: inherit;">Ambulance Requests</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🛏</span><a href="Bed availability.html" style="text-decoration: none; color: inherit;">Bed Availability</a> 
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">🏥</span><a href="Hospitals network.html" style="text-decoration: none; color: inherit;">Hospitals Network</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📊</span><a href="Network reports.html" style="text-decoration: none; color: inherit;">Reports</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span><a href="Settings.html" style="text-decoration: none; color: inherit;">Settings</a>
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div><span class="node-dot"></span><span class="node-name">Node Alpha-1</span></div>
+    <div class="node-status">● System Online</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="tb">
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Search facilities, capabilities, or staff..."/>
+    </div>
+    <div class="tb-right">
+      <div class="notif">🔔<span class="nb"></span></div>
+      <div style="color:rgba(255,255,255,.5);font-size:16px">👤</div>
+      <div class="tb-user-block">
+        <div class="tb-user-name">SHH</div>
+        <div class="tb-user-role">NETWORK MANAGER</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-row">
+
+    <!-- MAP AREA -->
+    <div class="map-area">
+      <canvas id="mapCanvas"></canvas>
+
+      <!-- OVERVIEW CARD -->
+      <div class="overview-card">
+        <div class="ov-title">Network Overview</div>
+        <div class="ov-sub">14 Facilities found within 20km radius.</div>
+        <div class="ov-legend">
+          <div class="ov-leg"><span class="ov-dot" style="background:#10b981"></span>Stable</div>
+          <div class="ov-leg"><span class="ov-dot" style="background:#f59e0b"></span>Warning</div>
+          <div class="ov-leg"><span class="ov-dot" style="background:#ef4444"></span>Critical</div>
+        </div>
+      </div>
+
+      <!-- MAP CONTROLS -->
+      <div class="map-controls">
+        <div class="map-btn">+</div>
+        <div class="map-btn">−</div>
+        <div class="map-loc">⊙</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="rp-header">
+        <div class="rp-title">Nearby Facilities</div>
+        <div class="rp-filter">⚙</div>
+      </div>
+
+      <!-- FACILITY 1 -->
+      <div class="fac-card">
+        <span class="fac-badge badge-alert">TRIAGE ALERT</span>
+        <div class="fac-top">
+          <div>
+            <div class="fac-name">Central General<br>Hospital</div>
+            <div class="fac-type">Regional Trauma Center<br>Level 1</div>
+          </div>
+          <div>
+            <div class="fac-dist-val">2.4<span class="fac-dist-unit">km</span></div>
+            <div class="fac-eta">ETA: <strong>8 mins</strong></div>
+          </div>
+        </div>
+        <div class="fac-stats">
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ER BEDS</div>
+            <div class="fac-stat-val v-blue">02<span style="font-size:9px;font-weight:400;color:var(--tm)">/45</span></div>
+          </div>
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ICU BEDS</div>
+            <div class="fac-stat-val v-red">05<span style="font-size:9px;font-weight:400;color:var(--tm)">/12</span></div>
+          </div>
+        </div>
+        <div class="fac-btn-row">
+          <button class="btn-view">View Details</button>
+          <div class="btn-more">⋮</div>
+        </div>
+      </div>
+
+      <!-- FACILITY 2 -->
+      <div class="fac-card">
+        <span class="fac-badge badge-high">HIGH AVAILABILITY</span>
+        <div class="fac-top">
+          <div>
+            <div class="fac-name">Eastside Medical<br>Park</div>
+            <div class="fac-type">General Healthcare &amp;<br>Surgery</div>
+          </div>
+          <div>
+            <div class="fac-dist-val">4.1<span class="fac-dist-unit">km</span></div>
+            <div class="fac-eta">ETA: <strong>14 mins</strong></div>
+          </div>
+        </div>
+        <div class="fac-stats">
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ER BEDS</div>
+            <div class="fac-stat-val v-green">18<span style="font-size:9px;font-weight:400;color:var(--tm)">/30</span></div>
+          </div>
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ICU BEDS</div>
+            <div class="fac-stat-val v-green">12<span style="font-size:9px;font-weight:400;color:var(--tm)">/20</span></div>
+          </div>
+        </div>
+        <div class="fac-btn-row">
+          <button class="btn-suggest">Suggest Hospital</button>
+          <div class="btn-more">⋮</div>
+        </div>
+      </div>
+
+      <!-- FACILITY 3 -->
+      <div class="fac-card">
+        <span class="fac-badge badge-moderate">MODERATE TRAFFIC</span>
+        <div class="fac-top">
+          <div>
+            <div class="fac-name">North Hills<br>Specialized</div>
+            <div class="fac-type">Cardiology &amp; Neurology</div>
+          </div>
+          <div>
+            <div class="fac-dist-val">6.8<span class="fac-dist-unit">km</span></div>
+            <div class="fac-eta">ETA: <strong>22 mins</strong></div>
+          </div>
+        </div>
+        <div class="fac-stats">
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ER BEDS</div>
+            <div class="fac-stat-val v-orange">07<span style="font-size:9px;font-weight:400;color:var(--tm)">/22</span></div>
+          </div>
+          <div class="fac-stat">
+            <div class="fac-stat-lbl">ICU BEDS</div>
+            <div class="fac-stat-val v-orange">04<span style="font-size:9px;font-weight:400;color:var(--tm)">/8</span></div>
+          </div>
+        </div>
+        <div class="fac-btn-row">
+          <button class="btn-view">View Details</button>
+          <div class="btn-more">⋮</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const pins = [
+  {u:0.35, v:0.30, color:'#06b6d4', phase:0,    size:1},
+  {u:0.52, v:0.25, color:'#06b6d4', phase:0.8,  size:1},
+  {u:0.60, v:0.40, color:'#06b6d4', phase:1.6,  size:1},
+  {u:0.44, v:0.47, color:'#00ffee', phase:2.4,  size:1.4},
+  {u:0.28, v:0.50, color:'#06b6d4', phase:3.2,  size:1},
+  {u:0.56, v:0.58, color:'#10b981', phase:0.4,  size:1},
+  {u:0.40, v:0.62, color:'#06b6d4', phase:1.2,  size:1},
+  {u:0.22, v:0.36, color:'#f59e0b', phase:2.0,  size:0.9},
+  {u:0.68, v:0.30, color:'#06b6d4', phase:2.8,  size:0.9},
+];
+
+const connections = [
+  [0,1],[1,2],[2,5],[0,3],[3,4],[3,6],[5,6],[1,3],[4,7],[2,8],[1,8]
+];
+
+const roads = [
+  [[0.05,0.28],[0.35,0.30],[0.44,0.47],[0.60,0.40],[0.90,0.36]],
+  [[0.15,0.62],[0.40,0.62],[0.56,0.58],[0.82,0.54]],
+  [[0.35,0.10],[0.35,0.30],[0.44,0.47],[0.40,0.75]],
+  [[0.20,0.18],[0.52,0.25],[0.60,0.40],[0.72,0.68]],
+  [[0.05,0.50],[0.28,0.50],[0.44,0.47]],
+  [[0.10,0.38],[0.22,0.36],[0.35,0.30]],
+];
+
+let t = 0;
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0,'#04080f');
+  bgGrad.addColorStop(0.5,'#060d18');
+  bgGrad.addColorStop(1,'#04080f');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  const cols = 18, rows = 14;
+  ctx.strokeStyle = 'rgba(0,200,220,0.06)';
+  ctx.lineWidth = 0.5;
+  for(let i=0;i<=cols;i++){
+    ctx.beginPath();
+    ctx.moveTo(i/cols*W, 0);
+    ctx.lineTo(i/cols*W, H);
+    ctx.stroke();
+  }
+  for(let j=0;j<=rows;j++){
+    ctx.beginPath();
+    ctx.moveTo(0, j/rows*H);
+    ctx.lineTo(W, j/rows*H);
+    ctx.stroke();
+  }
+
+  function sp(u,v){return {x:u*W, y:v*H}}
+
+  // Roads
+  roads.forEach(pts => {
+    ctx.beginPath();
+    pts.forEach(([u,v],i)=>{
+      const p = sp(u,v);
+      i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);
+    });
+    ctx.strokeStyle='rgba(0,210,240,0.14)';
+    ctx.lineWidth=1.2;
+    ctx.stroke();
+    ctx.strokeStyle='rgba(0,210,240,0.05)';
+    ctx.lineWidth=5;
+    ctx.stroke();
+  });
+
+  // Connections
+  connections.forEach(([a,b])=>{
+    const pa=pins[a], pb=pins[b];
+    const p1=sp(pa.u,pa.v), p2=sp(pb.u,pb.v);
+    const alpha=0.12+0.08*Math.sin(t*0.02+pa.phase);
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.strokeStyle=`rgba(0,220,255,${alpha})`;
+    ctx.lineWidth=0.7;
+    ctx.stroke();
+  });
+
+  // Pins
+  pins.forEach(pin=>{
+    const p=sp(pin.u,pin.v);
+    const pulse=(t*0.022+pin.phase)%(Math.PI*2);
+    const ringR=(8+14*(pulse/(Math.PI*2)))*pin.size;
+    const ringA=0.55*(1-pulse/(Math.PI*2));
+
+    // Pulse ring
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,ringR,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(0,220,255,${ringA})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+
+    // Glow
+    const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,10*pin.size);
+    gr.addColorStop(0,pin.color);
+    gr.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,9*pin.size,0,Math.PI*2);
+    ctx.fillStyle=gr;
+    ctx.fill();
+
+    // Pin circle
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,3.5*pin.size,0,Math.PI*2);
+    ctx.fillStyle=pin.color;
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.8)';
+    ctx.lineWidth=1.2;
+    ctx.stroke();
+
+    // Teardrop point
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y+3.5*pin.size);
+    ctx.lineTo(p.x-2.5*pin.size,p.y+9*pin.size);
+    ctx.lineTo(p.x+2.5*pin.size,p.y+9*pin.size);
+    ctx.closePath();
+    ctx.fillStyle=pin.color;
+    ctx.fill();
+  });
+
+  // Ambient glow blobs
+  const blobs = [
+    {x:0.35,y:0.30,r:0.12,c:'rgba(6,182,212,0.06)'},
+    {x:0.44,y:0.47,r:0.15,c:'rgba(0,255,238,0.07)'},
+    {x:0.56,y:0.58,r:0.10,c:'rgba(16,185,129,0.06)'},
+  ];
+  blobs.forEach(b=>{
+    const bg=ctx.createRadialGradient(b.x*W,b.y*H,0,b.x*W,b.y*H,b.r*Math.max(W,H));
+    bg.addColorStop(0,b.c);
+    bg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=bg;
+    ctx.fillRect(0,0,W,H);
+  });
+
+  t++;
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

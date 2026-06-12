@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SHH – Bed Availability</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f9;--sb:#1a1f2e;--card:#fff;--border:#e5e9f0;
+  --tp:#1a1f2e;--ts:#6b7280;--tm:#9ca3af;
+  --blue:#2563eb;--red:#ef4444;--green:#10b981;--orange:#f97316;
+  --r:10px;--sh:0 1px 4px rgba(0,0,0,0.06);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tp);display:flex;height:100vh;overflow:hidden;font-size:13px}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    background:#1a1f2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #2a3045;
+  }
+  .brand-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .brand-sub { color: #5a6378; font-size: 10px; margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: #7b839a;
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-item:hover { background: #232940; color: #c8cdd9; }
+  .nav-item.active {
+    color: #fff;
+    background: #232940;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px; bottom: 5px;
+    width: 3px;
+    background:#2563eb;
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.tb{background:var(--card);border-bottom:1px solid var(--border);height:48px;padding:0 22px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.search-wrap{flex:1;max-width:380px;position:relative}
+.search-wrap input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 30px;font-size:12px;color:var(--tp);outline:none}
+.search-wrap input::placeholder{color:var(--tm)}
+.search-wrap .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.notif{position:relative;font-size:17px;color:var(--ts);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.nb{position:absolute;top:2px;right:2px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1px solid #fff}
+.u-av{width:28px;height:28px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:var(--ts);font-size:15px;border:1px solid var(--border)}
+
+/* CONTENT */
+.cnt{flex:1;overflow-y:auto;padding:0}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--border);background:var(--card)}
+.stat-card{padding:16px 20px 14px;border-right:1px solid var(--border);position:relative}
+.stat-card:last-child{border-right:none}
+.stat-card.critical{border-top:2px solid var(--red)}
+.stat-label{font-size:9.5px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.stat-icon{font-size:14px}
+.stat-icon.blue{color:var(--blue)}
+.stat-icon.red{color:var(--red)}
+.stat-icon.gray{color:var(--ts)}
+.stat-val{font-size:26px;font-weight:800;color:var(--tp);line-height:1;margin-bottom:3px}
+.stat-sub{font-size:11px;color:var(--tm)}
+.stat-bar{margin-top:8px;height:3px;background:var(--border);border-radius:3px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:3px}
+
+/* SECTION HEADER */
+.section-wrap{padding:18px 22px 12px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:16px;font-weight:800;color:var(--tp);display:flex;align-items:center;gap:10px}
+.live-badge{display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #bbf7d0;color:#059669;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* FILTER TABS */
+.filter-row{display:flex;align-items:center;gap:6px}
+.ftab{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--ts);transition:all .15s}
+.ftab:hover{background:var(--bg)}
+.ftab.act{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ftab-status{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--ts)}
+
+/* BED GRID */
+.bed-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.bed-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:14px;box-shadow:var(--sh);position:relative;min-height:120px}
+.bed-card.critical-card{border-color:#fca5a5;background:#fffafa}
+.bed-card.reserved-card{border-color:#fcd34d}
+.bed-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px}
+.bed-num{font-size:14px;font-weight:800;color:var(--tp)}
+.bed-icon{font-size:14px;color:var(--tm)}
+.bed-icon.orange{color:var(--orange)}
+.bed-icon.red{color:var(--red)}
+.bed-icon.blue{color:var(--blue)}
+.bed-ward{font-size:10.5px;color:var(--tm);margin-bottom:10px}
+.bed-status{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;margin-bottom:6px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-green{background:#10b981}
+.dot-blue{background:#3b82f6}
+.dot-orange{background:#f59e0b}
+.dot-red{background:#ef4444}
+.status-green{color:#059669}
+.status-blue{color:#2563eb}
+.status-orange{color:#d97706}
+.status-red{color:#dc2626}
+.bed-meta{font-size:10px;color:var(--tm);margin-bottom:2px}
+.bed-meta strong{color:var(--ts);font-weight:600}
+.eta-val{font-size:11px;font-weight:700;color:var(--orange)}
+.alert-chip{display:inline-flex;align-items:center;gap:4px;background:#fffbeb;border:1px solid #fcd34d;color:#d97706;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;margin-top:4px}
+.critical-chip{display:inline-flex;align-items:center;gap:4px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:3px}
+.vital-alert{background:#fef2f2;border:1px solid #fca5a5;border-radius:4px;padding:5px 8px;margin-top:6px}
+.vital-alert-label{font-size:9px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px}
+.vital-alert-val{font-size:11px;font-weight:700;color:#dc2626}
+
+/* LEGEND */
+.legend-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0 14px}
+.legend-items{display:flex;gap:16px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ts)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.legend-cap{font-size:11px;color:var(--ts)}
+
+/* BOTTOM ROW */
+.bottom-row{display:grid;grid-template-columns:1fr 280px;gap:14px;padding:0 22px 20px}
+
+/* TRANSITIONS CARD */
+.trans-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden}
+.trans-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+.trans-title{font-size:13px;font-weight:700;color:var(--tp)}
+.trans-link{font-size:11px;color:var(--blue);cursor:pointer;font-weight:500}
+.trans-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #f3f4f6}
+.trans-item:last-child{border-bottom:none}
+.trans-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ti-green{background:#f0fdf4}
+.ti-blue{background:#eff6ff}
+.trans-info{flex:1}
+.trans-name{font-size:12px;font-weight:700;color:var(--tp);margin-bottom:2px}
+.trans-sub{font-size:10.5px;color:var(--tm)}
+.trans-time{font-size:10px;color:var(--tm);white-space:nowrap}
+
+/* FACILITY LOAD */
+.facility-card{background:var(--blue);border-radius:var(--r);padding:18px;color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.fac-title{font-size:15px;font-weight:800;margin-bottom:8px}
+.fac-body{font-size:11px;color:rgba(255,255,255,.75);line-height:1.55;margin-bottom:16px}
+.fac-bar-label{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.fac-bar-l{color:rgba(255,255,255,.6)}
+.fac-bar-r{color:rgba(255,255,255,.6)}
+.fac-bar{height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;margin-bottom:16px}
+.fac-bar-fill{height:100%;border-radius:3px;background:#fff;width:72%}
+.fac-btn{width:100%;padding:10px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:7px;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;cursor:pointer;text-align:center;transition:background .15s}
+.fac-btn:hover{background:rgba(255,255,255,.25)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">SHH</div>
+    <div class="brand-sub">Regional Network Alpha</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <span class="nav-icon">⊞</span><a href="Dashboard.html" style="text-decoration: none; color: inherit;">Dashboard</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🚑</span><a href="Requests managment.html.html" style="text-decoration: none; color: inherit;">Ambulance Requests</a>
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">🛏</span><a href="Bed availability.html" style="text-decoration: none; color: inherit;">Bed Availability</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🏥</span><a href="Hospitals network.html" style="text-decoration: none; color: inherit;">Hospitals Network</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📊</span><a href="Network reports.html" style="text-decoration: none; color: inherit;">Reports</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span><a href="Settings.html" style="text-decoration: none; color: inherit;">Settings</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="tb">
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Search beds, patients, or rooms..."/>
+    </div>
+    <div class="tb-right">
+      <div class="notif">🔔<span class="nb"></span></div>
+      <div class="u-av">👤</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="cnt">
+
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon blue">✳</span> Emergency Room</div>
+        <div class="stat-val">14</div>
+        <div class="stat-sub">/ 20 Available</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:70%;background:#2563eb"></div></div>
+      </div>
+      <div class="stat-card critical">
+        <div class="stat-label"><span class="stat-icon red">♥</span> Critical Care (ICU)</div>
+        <div class="stat-val">02</div>
+        <div class="stat-sub">/ 12 Available</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:17%;background:#ef4444"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon gray">✏</span> Surgery Ward</div>
+        <div class="stat-val">08</div>
+        <div class="stat-sub">/ 15 Available</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:53%;background:#6b7280"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon gray">🛏</span> General Beds</div>
+        <div class="stat-val">32</div>
+        <div class="stat-sub">/ 45 Available</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:71%;background:#6b7280"></div></div>
+      </div>
+    </div>
+
+    <!-- SECTION -->
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-title">
+          Real-time Bed Map
+          <div class="live-badge"><span class="live-dot"></span> LIVE UPDATES</div>
+        </div>
+        <div class="filter-row">
+          <div class="ftab act">ALL</div>
+          <div class="ftab">ER</div>
+          <div class="ftab">ICU</div>
+          <div class="ftab">SURGERY</div>
+          <div class="ftab-status">Status: All States</div>
+        </div>
+      </div>
+
+      <!-- ROW 1 -->
+      <div class="bed-grid">
+
+        <!-- A-101 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">A-101</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">Emergency Ward</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+
+        <!-- B-205 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">B-205</div>
+            <span class="bed-icon blue">👤</span>
+          </div>
+          <div class="bed-ward">ICU South Wing</div>
+          <div class="bed-status"><span class="dot dot-blue"></span><span class="status-blue">OCCUPIED</span></div>
+          <div class="bed-meta">PATIENT ID</div>
+          <div class="bed-meta"><strong>#PX-99281-W</strong></div>
+        </div>
+
+        <!-- C-312 -->
+        <div class="bed-card reserved-card">
+          <div class="bed-card-header">
+            <div class="bed-num">C-312</div>
+            <span class="bed-icon orange">🛏</span>
+          </div>
+          <div class="bed-ward">Post-Op Recovery</div>
+          <div class="bed-status"><span class="dot dot-orange"></span><span class="status-orange">RESERVED</span></div>
+          <div class="bed-meta">EXPECTED ARRIVAL</div>
+          <div class="eta-val">14:45 PM</div>
+        </div>
+
+        <!-- I-004 -->
+        <div class="bed-card critical-card">
+          <div class="bed-card-header">
+            <div class="bed-num">I-004</div>
+            <span class="bed-icon red">⚠</span>
+          </div>
+          <div class="bed-ward">ICU High Risk</div>
+          <div class="bed-status"><span class="dot dot-red"></span><span class="status-red">OCCUPIED (CRITICAL)</span></div>
+          <div class="vital-alert">
+            <div class="vital-alert-label">VITALS ALERT</div>
+            <div class="vital-alert-val">Unstable HR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2 -->
+      <div class="bed-grid">
+
+        <!-- A-102 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">A-102</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">Emergency Ward</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+
+        <!-- A-103 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">A-103</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">Emergency Ward</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+
+        <!-- S-401 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">S-401</div>
+            <span class="bed-icon blue">👤</span>
+          </div>
+          <div class="bed-ward">Surgery Floor</div>
+          <div class="bed-status"><span class="dot dot-blue"></span><span class="status-blue">OCCUPIED</span></div>
+          <div class="bed-meta"><strong>#Pu-7712-R</strong></div>
+        </div>
+
+        <!-- A-104 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">A-104</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">Emergency Ward</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+      </div>
+
+      <!-- ROW 3 -->
+      <div class="bed-grid">
+
+        <!-- B-210 -->
+        <div class="bed-card reserved-card">
+          <div class="bed-card-header">
+            <div class="bed-num">B-210</div>
+            <span class="bed-icon orange">🛏</span>
+          </div>
+          <div class="bed-ward">ICU North Wing</div>
+          <div class="bed-status"><span class="dot dot-orange"></span><span class="status-orange">RESERVED</span></div>
+          <div class="alert-chip">Triage Escalation</div>
+        </div>
+
+        <!-- G-505 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">G-505</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">General Ward 5</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+
+        <!-- G-506 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">G-506</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">General Ward 5</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+
+        <!-- G-507 -->
+        <div class="bed-card">
+          <div class="bed-card-header">
+            <div class="bed-num">G-507</div>
+            <span class="bed-icon">✓</span>
+          </div>
+          <div class="bed-ward">General Ward 5</div>
+          <div class="bed-status"><span class="dot dot-green"></span><span class="status-green">AVAILABLE</span></div>
+        </div>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="legend-row">
+        <div class="legend-items">
+          <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span> Available</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Occupied</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Reserved</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Maintenance / Critical</div>
+        </div>
+        <div class="legend-cap">Total Capacity: 244 Beds &bull; Active Monitoring: ON</div>
+      </div>
+
+      <!-- BOTTOM ROW -->
+      <div class="bottom-row" style="padding:0 0 0 0">
+        <!-- TRANSITIONS -->
+        <div class="trans-card">
+          <div class="trans-header">
+            <div class="trans-title">Recent Bed Transitions</div>
+            <div class="trans-link">View History</div>
+          </div>
+          <div class="trans-item">
+            <div class="trans-icon ti-green">↗</div>
+            <div class="trans-info">
+              <div class="trans-name">Discharge Processed — Bed A-105</div>
+              <div class="trans-sub">Patient Pu-11202 cleared by Dr. Afis</div>
+            </div>
+            <div class="trans-time">2 mins ago</div>
+          </div>
+          <div class="trans-item">
+            <div class="trans-icon ti-blue">↙</div>
+            <div class="trans-info">
+              <div class="trans-name">Emergency Admission — Bed ER-12</div>
+              <div class="trans-sub">Trauma arrival via Ambulance Network</div>
+            </div>
+            <div class="trans-time">14 mins ago</div>
+          </div>
+        </div>
+
+        <!-- FACILITY LOAD -->
+        <div class="facility-card">
+          <div class="fac-title">Facility Load</div>
+          <div class="fac-body">Overall regional bed occupancy is currently at 78%. High demand predicted for ICU in next 4 hours.</div>
+          <div class="fac-bar-label">
+            <span class="fac-bar-l">Network Bandwidth</span>
+            <span class="fac-bar-r">Optimal</span>
+          </div>
+          <div class="fac-bar"><div class="fac-bar-fill"></div></div>
+          <button class="fac-btn">MANAGE OVERFLOW</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

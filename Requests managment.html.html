@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SHH – Ambulance Requests</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f6f9;
+    --sidebar-bg: #1a1f2e;
+    --sidebar-text: #7b839a;
+    --sidebar-active: #ffffff;
+    --card-bg: #ffffff;
+    --border: #e5e9f0;
+    --text-primary: #1a1f2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --orange: #f59e0b;
+    --orange-light: #fffbeb;
+    --green: #10b981;
+    --green-light: #ecfdf5;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 200px;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #2a3045;
+  }
+  .brand-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .brand-sub { color: #5a6378; font-size: 10px; margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: var(--sidebar-text);
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-item:hover { background: #232940; color: #c8cdd9; }
+  .nav-item.active {
+    color: #fff;
+    background: #232940;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px; bottom: 5px;
+    width: 3px;
+    background: var(--blue);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    height: 50px;
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .topbar-logo {
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    margin-right: 10px;
+  }
+  .search-wrap {
+    flex: 1;
+    max-width: 340px;
+    position: relative;
+  }
+  .search-wrap input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px 6px 32px;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+  }
+  .search-wrap input::placeholder { color: var(--text-muted); }
+  .search-wrap .si {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-icon {
+    color: var(--text-secondary);
+    font-size: 17px;
+    cursor: pointer;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 24px 16px;
+  }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 18px; }
+  .page-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .page-title { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+  .page-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  .header-stats { display: flex; gap: 10px; }
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    min-width: 120px;
+  }
+  .stat-pill.red-pill {
+    background: #fff5f5;
+    border-color: #fca5a5;
+  }
+  .stat-pill-label { font-size: 9.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; }
+  .stat-pill-val { font-size: 22px; font-weight: 800; line-height: 1; }
+  .stat-pill-val.blue { color: var(--blue); }
+  .stat-pill-val.red { color: var(--red); }
+  .stat-pill-icon { font-size: 18px; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .filter-tabs { display: flex; gap: 6px; }
+  .ftab {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .ftab:hover { background: var(--bg); }
+  .ftab.active {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+    font-weight: 600;
+  }
+  .filter-actions { display: flex; gap: 8px; }
+  .btn-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-filter:hover { background: var(--bg); }
+  .btn-dispatch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-dispatch:hover { background: #1d4ed8; }
+
+  /* TABLE CARD */
+  .table-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 9px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    background: #f9fafb;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #f1f3f7;
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+  tbody td {
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .req-id { font-weight: 700; color: var(--text-primary); font-size: 12px; }
+  .patient-name { font-weight: 600; font-size: 12px; color: var(--text-primary); }
+  .patient-meta { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .chip-critical { background: #fef2f2; color: #dc2626; }
+  .chip-moderate { background: #fffbeb; color: #d97706; }
+  .chip-stable   { background: #f0fdf4; color: #16a34a; }
+  .chip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-red { background: #dc2626; }
+  .dot-orange { background: #d97706; }
+  .dot-green { background: #16a34a; }
+
+  .loc-cell { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+  .loc-icon { color: var(--blue); font-size: 12px; }
+
+  .eta-cell { font-weight: 700; font-size: 12px; color: var(--blue); }
+
+  .bed-tag {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .bed-cardiac  { background: #fff0f0; color: #c0392b; }
+  .bed-ortho    { background: #fff8e1; color: #b7791f; }
+  .bed-general  { background: #e8f5e9; color: #276749; }
+  .bed-trauma   { background: #fce8e6; color: #c0392b; }
+
+  .status-chip {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .status-enroute   { color: #2563eb; }
+  .status-pending   { color: #d97706; }
+  .status-accepted  { color: #059669; }
+  .status-arriving  { color: #7c3aed; font-weight: 800; }
+  .status-imminent  { color: #dc2626; font-weight: 800; }
+
+  .view-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .view-btn:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+
+  /* PAGINATION */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  .pag-info { font-size: 11px; color: var(--text-muted); }
+  .pag-info span { font-weight: 600; color: var(--text-primary); }
+  .pag-controls { display: flex; align-items: center; gap: 4px; }
+  .pag-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .pag-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 700; }
+  .pag-btn:hover:not(.active) { background: var(--bg); }
+
+  /* BOTTOM ROW */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 14px;
+  }
+
+  /* HEATMAP CARD */
+  .heatmap-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .heatmap-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .heatmap-title { font-size: 13px; font-weight: 700; }
+  .heatmap-legend { display: flex; gap: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted); }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .heatmap-body {
+    height: 130px;
+    background: linear-gradient(160deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Grid lines */
+  .heatmap-body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  /* Glow blobs */
+  .glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(18px);
+    opacity: 0.55;
+  }
+  .glow-red   { width: 80px; height: 80px; background: #ef4444; top: 10px; left: 20%; }
+  .glow-blue  { width: 60px; height: 60px; background: #3b82f6; bottom: 15px; right: 30%; }
+  .glow-small { width: 40px; height: 40px; background: #f59e0b; top: 30px; right: 18%; opacity: 0.4; }
+
+  .map-pin {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+  }
+  .map-pin-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .map-pin-line { width: 1px; height: 8px; background: rgba(255,255,255,0.5); }
+  .map-pin-label {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+    font-weight: 600;
+  }
+  .heatmap-footer {
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: #fafbfc;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pulse-ring {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.25);
+    flex-shrink: 0;
+  }
+
+  /* ALERT CARD */
+  .alert-card {
+    background: var(--blue);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .alert-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 8px;
+  }
+  .alert-title { font-size: 16px; font-weight: 800; line-height: 1.3; margin-bottom: 10px; }
+  .alert-body { font-size: 11px; color: rgba(255,255,255,0.75); line-height: 1.6; margin-bottom: 16px; }
+  .alert-btn {
+    width: 100%;
+    padding: 9px;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    transition: opacity 0.15s;
+  }
+  .alert-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">SHH</div>
+    <div class="brand-sub">Regional Network Alpha</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <span class="nav-icon">⊞</span><a href="Dashboard.html" style="text-decoration: none; color: inherit;">Dashboard</a>
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">🚑</span><a href="Requests managment.html.html" style="text-decoration: none; color: inherit;">Ambulance Requests</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🛏</span><a href="Bed availability.html" style="text-decoration: none; color: inherit;">Bed Availability</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🏥</span><a href="Hospitals network.html" style="text-decoration: none; color: inherit;">Hospitals Network</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📊</span><a href="Network reports.html" style="text-decoration: none; color: inherit;">Reports</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span><a href="Settings.html" style="text-decoration: none; color: inherit;">Settings</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">SHH</div>
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Global search for patients or vehicles…" />
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon">🔔</div>
+      <div class="topbar-icon">👤</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-top">
+        <div>
+          <div class="page-title">Ambulance Requests</div>
+          <div class="page-sub">Real-time dispatch and bed allocation management</div>
+        </div>
+        <div class="header-stats">
+          <div class="stat-pill">
+            <div>
+              <div class="stat-pill-label">Active Missions</div>
+              <div class="stat-pill-val blue">14</div>
+            </div>
+            <div class="stat-pill-icon">🚑</div>
+          </div>
+          <div class="stat-pill red-pill">
+            <div>
+              <div class="stat-pill-label">Unassigned Critical</div>
+              <div class="stat-pill-val red">03</div>
+            </div>
+            <div class="stat-pill-icon">⚠️</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="ftab active">All</button>
+        <button class="ftab">Pending</button>
+        <button class="ftab">Accepted</button>
+        <button class="ftab">Redirected</button>
+        <button class="ftab">Critical</button>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-filter">▼ Filters</button>
+        <button class="btn-dispatch">+ New Dispatch</button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Patient Condition</th>
+            <th>Severity</th>
+            <th>Ambulance Location</th>
+            <th>ETA</th>
+            <th>Required Bed</th>
+            <th>Status</th>
+            <th>Act.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ROW 1 -->
+          <tr>
+            <td><div class="req-id">#REQ-9842</div></td>
+            <td>
+              <div class="patient-name">Cardiac Arrest</div>
+              <div class="patient-meta">Male, 64y · Unresponsive</div>
+            </td>
+            <td><span class="chip chip-critical"><span class="chip-dot dot-red"></span>Critical</span></td>
+            <td>
+              <div class="loc-cell">
+                <span class="loc-icon">📍</span>5th Ave &amp; 22nd St
+              </div>
+            </td>
+            <td><span class="eta-cell">4m 12s</span></td>
+            <td><span class="bed-tag bed-cardiac">CARDIAC<br>ICU</span></td>
+            <td><span class="status-chip status-enroute">EN ROUTE</span></td>
+            <td><button class="view-btn"><a href="Request details.html" style="text-decoration: none; color: inherit;">View</a></button></td>
+          </tr>
+
+          <!-- ROW 2 -->
+          <tr>
+            <td><div class="req-id">#REQ-9845</div></td>
+            <td>
+              <div class="patient-name">Compound Fracture</div>
+              <div class="patient-meta">Female, 28y · Conscious</div>
+            </td>
+            <td><span class="chip chip-moderate"><span class="chip-dot dot-orange"></span>Moderate</span></td>
+            <td>
+              <div class="loc-cell">
+                <span class="loc-icon">📍</span>Grand Central Loop
+              </div>
+            </td>
+            <td><span class="eta-cell" style="color:var(--text-secondary);">12m 45s</span></td>
+            <td><span class="bed-tag bed-ortho">ORTHO<br>SURG</span></td>
+            <td><span class="status-chip status-pending">PENDING</span></td>
+            <td><button class="view-btn"><a href="Request details.html" style="text-decoration: none; color: inherit;">View</a></button></td>
+          </tr>
+
+          <!-- ROW 3 -->
+          <tr>
+            <td><div class="req-id">#REQ-9848</div></td>
+            <td>
+              <div class="patient-name">Abdominal Pain</div>
+              <div class="patient-meta">Male, 42y · Stable</div>
+            </td>
+            <td><span class="chip chip-stable"><span class="chip-dot dot-green"></span>Stable</span></td>
+            <td>
+              <div class="loc-cell">
+                <span class="loc-icon">📍</span>Riverside Pkwy
+              </div>
+            </td>
+            <td><span class="eta-cell" style="color:var(--text-secondary);">8m 20s</span></td>
+            <td><span class="bed-tag bed-general">GENERAL<br>MED</span></td>
+            <td><span class="status-chip status-accepted">ACCEPTED</span></td>
+            <td><button class="view-btn"><a href="Request details.html" style="text-decoration: none; color: inherit;">View</a></button></td>
+          </tr>
+
+          <!-- ROW 4 -->
+          <tr>
+            <td><div class="req-id">#REQ-9851</div></td>
+            <td>
+              <div class="patient-name">Major Trauma (MVA)</div>
+              <div class="patient-meta">Pedestrian · Critical</div>
+            </td>
+            <td><span class="chip chip-critical"><span class="chip-dot dot-red"></span>Critical</span></td>
+            <td>
+              <div class="loc-cell">
+                <span class="loc-icon">📍</span>Expressway Exit 4
+              </div>
+            </td>
+            <td><span class="eta-cell" style="color:#7c3aed;">ARRIVING</span></td>
+            <td><span class="bed-tag bed-trauma">TRAUMA<br>BAY 1</span></td>
+            <td><span class="status-chip status-imminent">IMMINENT</span></td>
+            <td><button class="view-btn"><a href="Request details.html" style="text-decoration: none; color: inherit;">View</a></button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <div class="pag-info">Showing <span>1–4</span> of <span>14</span> requests</div>
+        <div class="pag-controls">
+          <button class="pag-btn">‹</button>
+          <button class="pag-btn active">1</button>
+          <button class="pag-btn">2</button>
+          <button class="pag-btn">3</button>
+          <button class="pag-btn">›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- HEATMAP -->
+      <div class="heatmap-card">
+        <div class="heatmap-header">
+          <div class="heatmap-title">Regional ETA Heatmap</div>
+          <div class="heatmap-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>Fast</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Delayed</div>
+          </div>
+        </div>
+        <div class="heatmap-body">
+          <!-- Glow blobs -->
+          <div class="glow glow-red"></div>
+          <div class="glow glow-blue"></div>
+          <div class="glow glow-small"></div>
+          <!-- Map pin -->
+          <div class="map-pin" style="bottom:38px; left:48%;">
+            <div class="map-pin-dot" style="background:#3b82f6;"></div>
+            <div class="map-pin-line"></div>
+            <div class="map-pin-label">📍 Active Grid: Zone B Tracking</div>
+          </div>
+          <!-- Second pin -->
+          <div class="map-pin" style="top:22px; left:15%;">
+            <div class="map-pin-dot" style="background:#f59e0b;"></div>
+          </div>
+          <!-- Third pin -->
+          <div class="map-pin" style="bottom:20px; right:18%;">
+            <div class="map-pin-dot" style="background:#ef4444;"></div>
+          </div>
+        </div>
+        <div class="heatmap-footer">
+          <div class="pulse-ring"></div>
+          Active Grid: Zone B Tracking
+        </div>
+      </div>
+
+      <!-- ALERT CARD -->
+      <div class="alert-card">
+        <div>
+          <div class="alert-label">⚠ Redirection Alert</div>
+          <div class="alert-title">St. Jude Medical Center is currently at CAPACITY.</div>
+          <div class="alert-body">
+            Please redirect all non-critical ambulance requests to North General Hub until further notice.
+          </div>
+        </div>
+        <button class="alert-btn">Update Routing</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

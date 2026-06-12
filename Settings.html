@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SHH – Settings</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f9;--sb:#1e2333;--card:#fff;--border:#e5e9f0;
+  --tp:#1a1f2e;--ts:#6b7280;--tm:#9ca3af;
+  --blue:#2563eb;--red:#ef4444;--green:#10b981;--orange:#f97316;
+  --r:10px;--sh:0 1px 5px rgba(0,0,0,0.07);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tp);display:flex;height:100vh;overflow:hidden;font-size:13px}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    background:#1a1f2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #2a3045;
+  }
+  .brand-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .brand-sub { color: #5a6378; font-size: 10px; margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: #7b839a;
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-item:hover { background: #232940; color: #c8cdd9; }
+  .nav-item.active {
+    color: #fff;
+    background: #232940;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px; bottom: 5px;
+    width: 3px;
+    background:#2563eb;
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+
+/* TOPBAR */
+.tb{background:#fff;border-bottom:1px solid var(--border);height:50px;padding:0 28px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.tb-logo{font-weight:900;font-size:16px;color:var(--tp);letter-spacing:1px}
+.search-wrap{flex:0 0 240px;position:relative}
+.search-wrap input{width:100%;background:#f8f9fb;border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 30px;font-size:12px;color:var(--tp);outline:none}
+.search-wrap input::placeholder{color:var(--tm)}
+.search-wrap .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.notif{font-size:18px;color:var(--ts);cursor:pointer}
+.user-circle{width:32px;height:32px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:var(--ts);font-size:16px;border:1px solid var(--border);cursor:pointer}
+
+/* CONTENT */
+.cnt{flex:1;overflow-y:auto;padding:28px 32px 28px}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+.pt{font-size:26px;font-weight:800;color:var(--tp);line-height:1.1}
+.pt-sub{font-size:12px;color:var(--tm);margin-top:4px}
+.btn-save{display:flex;align-items:center;gap:7px;padding:9px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+.btn-save:hover{background:#1d4ed8}
+
+/* MAIN GRID */
+.grid{display:grid;grid-template-columns:1fr 280px;gap:18px}
+.left-col{display:flex;flex-direction:column;gap:16px}
+.right-col{display:flex;flex-direction:column;gap:16px}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:20px 22px}
+.card-title{font-size:13.5px;font-weight:700;color:var(--tp);display:flex;align-items:center;gap:7px;margin-bottom:18px}
+.card-title-icon{color:var(--blue);font-size:15px}
+
+/* HOSPITAL PROFILE */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:10.5px;font-weight:600;color:var(--tm);letter-spacing:.3px}
+.form-input{padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;color:var(--tp);outline:none;background:#fff;transition:border .15s}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+
+/* DEPARTMENTS */
+.dept-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.dept-title{font-size:13.5px;font-weight:700;color:var(--tp);display:flex;align-items:center;gap:7px}
+.btn-add{font-size:11.5px;font-weight:600;color:var(--blue);cursor:pointer;background:none;border:none;padding:0}
+.btn-add:hover{text-decoration:underline}
+
+.dept-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fff}
+.dept-item:last-child{margin-bottom:0}
+.dept-left{display:flex;align-items:center;gap:8px}
+.dept-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dept-name{font-size:12.5px;font-weight:600;color:var(--tp)}
+.dept-right{display:flex;align-items:center;gap:10px}
+.dept-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px}
+.badge-active{color:#059669;background:#f0fdf4}
+.badge-priority{color:#2563eb;background:#eff6ff}
+.badge-maint{color:#9ca3af;background:#f9fafb}
+.dept-del{color:var(--tm);cursor:pointer;font-size:15px;opacity:.6}
+.dept-del:hover{opacity:1;color:var(--red)}
+
+/* ACCOUNT SECURITY */
+.security-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);border-left:3px solid var(--blue);box-shadow:var(--sh);padding:18px 22px}
+.sec-title{font-size:13.5px;font-weight:700;color:var(--tp);display:flex;align-items:center;gap:7px;margin-bottom:16px}
+.sec-row{display:flex;align-items:center;gap:0}
+.sec-item{display:flex;align-items:center;gap:12px;flex:1}
+.sec-avatar{width:38px;height:38px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:var(--ts);font-size:18px;flex-shrink:0}
+.sec-info-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.sec-info-sub{font-size:10.5px;color:var(--tm);margin-top:1px}
+.sec-divider{width:1px;height:36px;background:var(--border);margin:0 20px;flex-shrink:0}
+.sec-key{width:36px;height:36px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sec-actions{display:flex;gap:8px;margin-left:auto}
+.btn-change{padding:8px 16px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12px;font-weight:600;color:var(--tp);cursor:pointer}
+.btn-change:hover{background:var(--bg)}
+.btn-manage{padding:8px 16px;border:none;border-radius:7px;background:var(--tp);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.btn-manage:hover{background:#111827}
+
+/* BED TYPES */
+.bed-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.bed-item:last-child{border-bottom:none}
+.bed-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.bed-name.icu{color:var(--red)}
+.bed-desc{font-size:10.5px;color:var(--tm);margin-top:1px}
+.bed-input{width:56px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:700;color:var(--tp);text-align:center;outline:none}
+.bed-input:focus{border-color:var(--blue)}
+
+/* ALERTS */
+.alert-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.alert-item:last-child{border-bottom:none}
+.alert-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.alert-desc{font-size:10.5px;color:var(--tm);margin-top:1px}
+
+/* TOGGLE */
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;border-radius:20px;background:#d1d5db;cursor:pointer;transition:background .2s}
+.toggle input:checked + .toggle-slider{background:var(--blue)}
+.toggle-slider::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked + .toggle-slider::after{transform:translateX(18px)}
+
+/* STATUS BAR */
+.status-bar{position:fixed;bottom:18px;right:24px;background:#1a1f2e;color:#fff;padding:8px 16px;border-radius:20px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.4px;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:100}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px #10b981}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">SHH</div>
+    <div class="brand-sub">Regional Network Alpha</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <span class="nav-icon">⊞</span><a href="Dashboard.html" style="text-decoration: none; color: inherit;">Dashboard</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🚑</span><a href="Requests managment.html.html" style="text-decoration: none; color: inherit;">Ambulance Requests</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🛏</span><a href="Bed availability.html" style="text-decoration: none; color: inherit;">Bed Availability</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🏥</span><a href="Hospitals network.html" style="text-decoration: none; color: inherit;">Hospitals Network</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📊</span><a href="Network reports.html" style="text-decoration: none; color: inherit;">Reports</a> 
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">⚙️</span><a href="Settings.html" style="text-decoration: none; color: inherit;">Settings</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="tb">
+    <div class="tb-logo">SHH</div>
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Search commands..."/>
+    </div>
+    <div class="tb-right">
+      <div class="notif">🔔</div>
+      <div class="user-circle">👤</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="cnt">
+
+    <!-- PAGE HEADER -->
+    <div class="ph">
+      <div>
+        <div class="pt">Settings</div>
+        <div class="pt-sub">Configure hospital parameters and system preferences.</div>
+      </div>
+      <button class="btn-save">💾 Save Changes</button>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="left-col">
+
+        <!-- HOSPITAL PROFILE -->
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🏥</span> Hospital Profile</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Hospital Name</label>
+              <input class="form-input" type="text" value="St. Margaret's Regional Medical Center"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Facility ID</label>
+              <input class="form-input" type="text" value="REG-ALPHA-00192"/>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Address</label>
+            <input class="form-input" type="text" value="1200 Emergency Way, Healthcare District, Metro City, 90210"/>
+          </div>
+        </div>
+
+        <!-- DEPARTMENTS -->
+        <div class="card">
+          <div class="dept-header">
+            <div class="dept-title"><span style="color:var(--blue);font-size:15px">👥</span> Departments</div>
+            <button class="btn-add">+ Add Department</button>
+          </div>
+
+          <div class="dept-item">
+            <div class="dept-left">
+              <span class="dept-dot" style="background:#ef4444"></span>
+              <span class="dept-name">Triage &amp; Trauma Center</span>
+            </div>
+            <div class="dept-right">
+              <span class="dept-badge badge-active">24/7 Active</span>
+              <span class="dept-del">🗑</span>
+            </div>
+          </div>
+
+          <div class="dept-item">
+            <div class="dept-left">
+              <span class="dept-dot" style="background:#3b82f6"></span>
+              <span class="dept-name">Cardiac Care Unit (CCU)</span>
+            </div>
+            <div class="dept-right">
+              <span class="dept-badge badge-priority">Level 1 Priority</span>
+              <span class="dept-del">🗑</span>
+            </div>
+          </div>
+
+          <div class="dept-item">
+            <div class="dept-left">
+              <span class="dept-dot" style="background:#d1d5db"></span>
+              <span class="dept-name" style="color:var(--tm)">Pediatric ER</span>
+            </div>
+            <div class="dept-right">
+              <span class="dept-badge badge-maint">Maintenance</span>
+              <span class="dept-del">🗑</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCOUNT SECURITY -->
+        <div class="security-card">
+          <div class="sec-title"><span style="color:var(--blue);font-size:15px">🛡</span> Account Security</div>
+          <div class="sec-row">
+            <div class="sec-item">
+              <div class="sec-avatar">👤</div>
+              <div>
+                <div class="sec-info-name">Two-Factor Authentication</div>
+                <div class="sec-info-sub">Enabled via App Generator</div>
+              </div>
+            </div>
+            <div class="sec-divider"></div>
+            <div class="sec-item">
+              <div class="sec-key">🔑</div>
+              <div>
+                <div class="sec-info-name">Encryption Protocol</div>
+                <div class="sec-info-sub">AES-256 System-Wide</div>
+              </div>
+            </div>
+            <div class="sec-actions">
+              <button class="btn-change">Change Password</button>
+              <button class="btn-manage">Manage Sessions</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- BED TYPES -->
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🌙</span> Bed Types</div>
+
+          <div class="bed-item">
+            <div>
+              <div class="bed-name">Standard Bed</div>
+              <div class="bed-desc">General monitoring</div>
+            </div>
+            <input class="bed-input" type="number" value="142"/>
+          </div>
+
+          <div class="bed-item">
+            <div>
+              <div class="bed-name icu">ICU / Critical Care</div>
+              <div class="bed-desc">Advanced life support</div>
+            </div>
+            <input class="bed-input" type="number" value="28"/>
+          </div>
+
+          <div class="bed-item">
+            <div>
+              <div class="bed-name">Isolation Unit</div>
+              <div class="bed-desc">Negative pressure rooms</div>
+            </div>
+            <input class="bed-input" type="number" value="12"/>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🔔</span> Alerts</div>
+
+          <div class="alert-item">
+            <div>
+              <div class="alert-name">Emergency Broadcast</div>
+              <div class="alert-desc">High priority pop-ups</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="alert-item">
+            <div>
+              <div class="alert-name">Audible Alarms</div>
+              <div class="alert-desc">Critical vitals sound</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="alert-item">
+            <div>
+              <div class="alert-name">Regional Sync</div>
+              <div class="alert-desc">Network-wide updates</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span class="status-dot"></span>
+  SYSTEM ONLINE: ENCRYPTED
+</div>
+
+</body>
+</html>

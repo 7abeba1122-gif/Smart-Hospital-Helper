@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SHH – Network Reports</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f9;--sb:#1a1f2e;--card:#fff;--border:#e5e9f0;
+  --tp:#1a1f2e;--ts:#6b7280;--tm:#9ca3af;
+  --blue:#2563eb;--red:#ef4444;--green:#10b981;--orange:#f97316;
+  --r:10px;--sh:0 1px 4px rgba(0,0,0,0.07);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tp);display:flex;height:100vh;overflow:hidden;font-size:13px}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    background:#1a1f2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #2a3045;
+  }
+  .brand-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .brand-sub { color: #5a6378; font-size: 10px; margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: #7b839a;
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-item:hover { background: #232940; color: #c8cdd9; }
+  .nav-item.active {
+    color: #fff;
+    background: #232940;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px; bottom: 5px;
+    width: 3px;
+    background:#2563eb;
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+.sb-footer{padding:11px 15px;border-top:1px solid #252c3d}
+.sys-label{font-size:9.5px;color:#4a5368;margin-bottom:4px;font-weight:600;letter-spacing:.3px}
+.sys-status{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#10b981;font-weight:600}
+.sys-dot{width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.tb{background:var(--card);border-bottom:1px solid var(--border);height:46px;padding:0 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.tb-logo{font-weight:900;font-size:15px;color:var(--tp);letter-spacing:1px;margin-right:6px}
+.search-wrap{flex:1;max-width:340px;position:relative}
+.search-wrap input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px 6px 30px;font-size:12px;color:var(--tp);outline:none}
+.search-wrap input::placeholder{color:var(--tm)}
+.search-wrap .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.notif{position:relative;font-size:17px;color:var(--ts);cursor:pointer}
+.nb{position:absolute;top:-1px;right:-1px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1px solid #fff}
+
+/* CONTENT */
+.cnt{flex:1;overflow-y:auto;padding:16px 20px 20px}
+
+/* BREADCRUMB */
+.bc{font-size:11px;color:var(--tm);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.bc a{color:var(--tm);text-decoration:none}
+.bc .cur{color:var(--blue);font-weight:600}
+.bc .sep{color:#d1d5db}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pt{font-size:22px;font-weight:800;color:var(--tp)}
+.ph-actions{display:flex;gap:8px;align-items:center}
+.btn-outline{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1px solid var(--border);border-radius:7px;background:var(--card);font-size:11px;font-weight:600;color:var(--ts);cursor:pointer}
+.btn-export{display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:7px;background:var(--blue);font-size:11px;font-weight:700;color:#fff;cursor:pointer}
+.btn-export:hover{background:#1d4ed8}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:12px 14px;box-shadow:var(--sh)}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.sc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.si-blue{background:#eff6ff}
+.si-green{background:#f0fdf4}
+.si-red{background:#fef2f2}
+.si-gray{background:#f9fafb}
+.sc-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.badge-green{background:#f0fdf4;color:#059669}
+.badge-red{background:#fef2f2;color:#dc2626}
+.badge-gray{background:#f3f4f6;color:#6b7280}
+.sc-label{font-size:10px;color:var(--tm);margin-bottom:3px}
+.sc-val{font-size:22px;font-weight:800;color:var(--tp);line-height:1}
+.sc-bar{margin-top:7px;height:2.5px;background:var(--border);border-radius:2px;overflow:hidden}
+.sc-bar-fill{height:100%;border-radius:2px}
+
+/* MIDDLE ROW */
+.mid-row{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:14px}
+
+/* BED OCCUPANCY CARD */
+.chart-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:14px 16px}
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.cc-title{font-size:13px;font-weight:700;color:var(--tp)}
+.cc-sub{font-size:10px;color:var(--tm);margin-bottom:12px}
+.cc-legend{display:flex;gap:14px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ts)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+.chart-area{position:relative;height:110px;margin-top:4px}
+.chart-svg{width:100%;height:100%}
+.tooltip-box{position:absolute;top:8px;left:54%;transform:translateX(-50%);background:#1a1f2e;color:#fff;font-size:10px;font-weight:600;padding:4px 9px;border-radius:5px;white-space:nowrap;pointer-events:none}
+.tooltip-box::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1f2e;border-bottom:none}
+.chart-xaxis{display:flex;justify-content:space-between;padding:4px 0 0;font-size:9.5px;color:var(--tm)}
+
+/* SEVERITY SPLIT */
+.severity-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:14px 16px}
+.sv-title{font-size:13px;font-weight:700;color:var(--tp);margin-bottom:2px}
+.sv-sub{font-size:10px;color:var(--tm);margin-bottom:14px}
+.donut-wrap{position:relative;display:flex;justify-content:center;align-items:center;margin-bottom:14px}
+.donut-svg{width:130px;height:130px}
+.donut-center{position:absolute;text-align:center}
+.dc-val{font-size:22px;font-weight:800;color:var(--tp);line-height:1}
+.dc-lbl{font-size:9px;color:var(--tm);font-weight:600;letter-spacing:.3px}
+.sv-legend{display:flex;flex-direction:column;gap:5px}
+.svl-item{display:flex;align-items:center;justify-content:space-between;font-size:10.5px}
+.svl-left{display:flex;align-items:center;gap:6px;color:var(--ts)}
+.svl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.svl-pct{font-weight:700;color:var(--tp)}
+
+/* BOTTOM ROW */
+.bot-row{display:grid;grid-template-columns:200px 1fr;gap:12px}
+
+/* AMBULANCE TIMES */
+.amb-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:14px 16px}
+.ac-title{font-size:13px;font-weight:700;color:var(--tp);margin-bottom:2px}
+.ac-sub{font-size:10px;color:var(--tm);margin-bottom:12px}
+.amb-item{margin-bottom:10px}
+.amb-item:last-child{margin-bottom:0}
+.amb-name{font-size:11px;font-weight:600;color:var(--tp);margin-bottom:3px}
+.amb-bar-row{display:flex;align-items:center;gap:8px}
+.amb-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.amb-bar-fill{height:100%;border-radius:3px}
+.amb-time{font-size:10.5px;font-weight:700;color:var(--tp);white-space:nowrap;min-width:32px;text-align:right}
+
+/* CASES TABLE */
+.cases-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden}
+.cases-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 10px;border-bottom:1px solid var(--border)}
+.cases-title{font-size:13px;font-weight:700;color:var(--tp)}
+.cases-sub{font-size:10px;color:var(--tm);margin-top:1px}
+.cases-link{font-size:11px;color:var(--blue);font-weight:500;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:8px 14px;font-size:9.5px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.6px;background:#fafbfc;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid #f3f4f6}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafbfd}
+tbody td{padding:10px 14px;font-size:11.5px;vertical-align:middle}
+.case-id{font-weight:700;color:var(--blue)}
+.status-chip{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.3px}
+.chip-opt{background:#f0fdf4;color:#059669}
+.chip-del{background:#fef2f2;color:#dc2626}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1f2e;color:#fff;padding:10px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,0.2);z-index:100}
+.toast-dot{width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0}
+.toast-x{margin-left:8px;cursor:pointer;color:rgba(255,255,255,.5);font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">SHH</div>
+    <div class="brand-sub">Regional Network Alpha</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <span class="nav-icon">⊞</span><a href="Dashboard.html" style="text-decoration: none; color: inherit;">Dashboard</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🚑</span><a href="Requests managment.html.html" style="text-decoration: none; color: inherit;">Ambulance Requests</a>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🛏</span><a href="Bed availability.html" style="text-decoration: none; color: inherit;">Bed Availability</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🏥</span><a href="Hospitals network.html" style="text-decoration: none; color: inherit;">Hospitals Network</a>
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">📊</span><a href="Network reports.html" style="text-decoration: none; color: inherit;">Reports</a> 
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span><a href="Settings.html" style="text-decoration: none; color: inherit;">Settings</a>
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sys-label">System Health</div>
+    <div class="sys-status"><span class="sys-dot"></span> Node Active</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="tb">
+    <div class="tb-logo">SHH</div>
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Search medical records or case IDs..."/>
+    </div>
+    <div class="tb-right">
+      <div class="notif">🔔</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="cnt">
+
+    <!-- BREADCRUMB -->
+    <div class="bc">
+      <a href="#">Main</a>
+      <span class="sep">›</span>
+      <span class="cur">Performance Analytics</span>
+    </div>
+
+    <!-- PAGE HEADER -->
+    <div class="ph">
+      <div class="pt">Network Reports</div>
+      <div class="ph-actions">
+        <button class="btn-outline">📅 Last 24 Hours</button>
+        <button class="btn-export">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="sc-top">
+          <div class="sc-icon si-blue">✳</div>
+          <span class="sc-badge badge-green">+12% vs avg</span>
+        </div>
+        <div class="sc-label">Total Requests Today</div>
+        <div class="sc-val">142</div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:72%;background:#2563eb"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-top">
+          <div class="sc-icon si-green">✔</div>
+          <span class="sc-badge badge-green">90.1% Rate</span>
+        </div>
+        <div class="sc-label">Accepted Cases</div>
+        <div class="sc-val">128</div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:90%;background:#10b981"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-top">
+          <div class="sc-icon si-red">↩</div>
+          <span class="sc-badge badge-red">-3 from peak</span>
+        </div>
+        <div class="sc-label">Redirected Cases</div>
+        <div class="sc-val">14</div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:10%;background:#ef4444"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-top">
+          <div class="sc-icon si-gray">⏱</div>
+          <span class="sc-badge badge-gray">Optimal</span>
+        </div>
+        <div class="sc-label">Avg. Bed Assignment</div>
+        <div class="sc-val">3.5m</div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:55%;background:#6b7280"></div></div>
+      </div>
+    </div>
+
+    <!-- MIDDLE ROW -->
+    <div class="mid-row">
+
+      <!-- BED OCCUPANCY CHART -->
+      <div class="chart-card">
+        <div class="cc-header">
+          <div>
+            <div class="cc-title">Bed Occupancy Rate</div>
+            <div class="cc-sub">Real-time capacity across 12 hospitals</div>
+          </div>
+          <div class="cc-legend">
+            <div class="leg-item"><span class="leg-dot" style="background:#2563eb"></span> Current</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#d1d5db"></span> Baseline</div>
+          </div>
+        </div>
+        <div class="chart-area">
+          <div class="tooltip-box">14:00 — 84% Capacity</div>
+          <svg class="chart-svg" viewBox="0 0 380 110" preserveAspectRatio="none">
+            <!-- Baseline dashed -->
+            <polyline points="0,65 50,62 100,60 150,58 200,56 250,58 300,60 350,62 380,63"
+              fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="5,4"/>
+            <!-- Current area fill -->
+            <path d="M0,80 C20,78 40,72 70,68 C100,64 120,55 150,50 C170,46 185,28 200,26 C215,24 230,38 250,50 C270,60 300,68 330,70 C350,71 365,72 380,72 L380,110 L0,110 Z"
+              fill="rgba(37,99,235,0.08)"/>
+            <!-- Current line -->
+            <path d="M0,80 C20,78 40,72 70,68 C100,64 120,55 150,50 C170,46 185,28 200,26 C215,24 230,38 250,50 C270,60 300,68 330,70 C350,71 365,72 380,72"
+              fill="none" stroke="#2563eb" stroke-width="2"/>
+            <!-- Tooltip dot -->
+            <circle cx="200" cy="26" r="4" fill="#2563eb" stroke="#fff" stroke-width="2"/>
+            <!-- Grid lines -->
+            <line x1="0" y1="20" x2="380" y2="20" stroke="#f3f4f6" stroke-width="0.5"/>
+            <line x1="0" y1="45" x2="380" y2="45" stroke="#f3f4f6" stroke-width="0.5"/>
+            <line x1="0" y1="70" x2="380" y2="70" stroke="#f3f4f6" stroke-width="0.5"/>
+            <line x1="0" y1="95" x2="380" y2="95" stroke="#f3f4f6" stroke-width="0.5"/>
+          </svg>
+        </div>
+        <div class="chart-xaxis">
+          <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
+        </div>
+      </div>
+
+      <!-- SEVERITY SPLIT -->
+      <div class="severity-card">
+        <div class="sv-title">Severity Split</div>
+        <div class="sv-sub">Requests by triage level</div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="50" fill="none" stroke="#f3f4f6" stroke-width="14"/>
+            <!-- Level 1 Critical 25% -->
+            <circle cx="65" cy="65" r="50" fill="none" stroke="#ef4444" stroke-width="14"
+              stroke-dasharray="78.5 235.6" stroke-dashoffset="0" transform="rotate(-90 65 65)"/>
+            <!-- Level 2 Urgent 45% -->
+            <circle cx="65" cy="65" r="50" fill="none" stroke="#f97316" stroke-width="14"
+              stroke-dasharray="141.4 235.6" stroke-dashoffset="-78.5" transform="rotate(-90 65 65)"/>
+            <!-- Level 3 Routine 30% -->
+            <circle cx="65" cy="65" r="50" fill="none" stroke="#2563eb" stroke-width="14"
+              stroke-dasharray="94.2 235.6" stroke-dashoffset="-219.9" transform="rotate(-90 65 65)"/>
+          </svg>
+          <div class="donut-center">
+            <div class="dc-val">142</div>
+            <div class="dc-lbl">CASES</div>
+          </div>
+        </div>
+        <div class="sv-legend">
+          <div class="svl-item">
+            <div class="svl-left"><span class="svl-dot" style="background:#ef4444"></span>Level 1: Critical</div>
+            <span class="svl-pct">25%</span>
+          </div>
+          <div class="svl-item">
+            <div class="svl-left"><span class="svl-dot" style="background:#f97316"></span>Level 2: Urgent</div>
+            <span class="svl-pct">45%</span>
+          </div>
+          <div class="svl-item">
+            <div class="svl-left"><span class="svl-dot" style="background:#2563eb"></span>Level 3: Routine</div>
+            <span class="svl-pct">30%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bot-row">
+
+      <!-- AMBULANCE TIMES -->
+      <div class="amb-card">
+        <div class="ac-title">Ambulance Times</div>
+        <div class="ac-sub">Mins to reach facility (Avg)</div>
+
+        <div class="amb-item">
+          <div class="amb-name">City General</div>
+          <div class="amb-bar-row">
+            <div class="amb-bar"><div class="amb-bar-fill" style="width:52%;background:#2563eb"></div></div>
+            <span class="amb-time">8.2m</span>
+          </div>
+        </div>
+        <div class="amb-item">
+          <div class="amb-name">St. Mary's</div>
+          <div class="amb-bar-row">
+            <div class="amb-bar"><div class="amb-bar-fill" style="width:81%;background:#ef4444"></div></div>
+            <span class="amb-time">12.5m</span>
+          </div>
+        </div>
+        <div class="amb-item">
+          <div class="amb-name">Central Medical</div>
+          <div class="amb-bar-row">
+            <div class="amb-bar"><div class="amb-bar-fill" style="width:40%;background:#f59e0b"></div></div>
+            <span class="amb-time">6.1m</span>
+          </div>
+        </div>
+        <div class="amb-item">
+          <div class="amb-name">North Wellness</div>
+          <div class="amb-bar-row">
+            <div class="amb-bar"><div class="amb-bar-fill" style="width:100%;background:#ef4444"></div></div>
+            <span class="amb-time">15.8m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT CASES TABLE -->
+      <div class="cases-card">
+        <div class="cases-header">
+          <div>
+            <div class="cases-title">Recent Completed Cases</div>
+            <div class="cases-sub">Last 5 cases resolved in network</div>
+          </div>
+          <span class="cases-link">View History</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Case ID</th>
+              <th>Hospital Response</th>
+              <th>Assigned Bed</th>
+              <th>Time Taken</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="case-id">#ER-9921</span></td>
+              <td style="color:var(--tp);font-size:11.5px">City General East</td>
+              <td style="color:var(--ts)">B-402 (ICU)</td>
+              <td style="color:var(--tp);font-weight:600">4.2m</td>
+              <td><span class="status-chip chip-opt">OPTIMIZED</span></td>
+            </tr>
+            <tr>
+              <td><span class="case-id">#ER-9920</span></td>
+              <td style="color:var(--tp);font-size:11.5px">St. Judes Cardiac</td>
+              <td style="color:var(--ts)">C-112 (Standard)</td>
+              <td style="color:var(--tp);font-weight:600">2.8m</td>
+              <td><span class="status-chip chip-opt">OPTIMIZED</span></td>
+            </tr>
+            <tr>
+              <td><span class="case-id">#ER-9919</span></td>
+              <td style="color:var(--tp);font-size:11.5px">Metropolis Health</td>
+              <td style="color:var(--ts)">A-205 (Isolation)</td>
+              <td style="color:var(--tp);font-weight:600">7.5m</td>
+              <td><span class="status-chip chip-del">DELAYED</span></td>
+            </tr>
+            <tr>
+              <td><span class="case-id">#ER-9918</span></td>
+              <td style="color:var(--tp);font-size:11.5px">University Medical</td>
+              <td style="color:var(--ts)">D-903 (ER)</td>
+              <td style="color:var(--tp);font-weight:600">3.1m</td>
+              <td><span class="status-chip chip-opt">OPTIMIZED</span></td>
+            </tr>
+            <tr>
+              <td><span class="case-id">#ER-9917</span></td>
+              <td style="color:var(--tp);font-size:11.5px">Children's Trust</td>
+              <td style="color:var(--ts)">P-002 (Pediatric)</td>
+              <td style="color:var(--tp);font-weight:600">5.2m</td>
+              <td><span class="status-chip chip-opt">OPTIMIZED</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-dot"></span>
+  Network reports updated successfully.
+  <span class="toast-x" onclick="document.getElementById('toast').style.display='none'">✕</span>
+</div>
+
+</body>
+</html>
